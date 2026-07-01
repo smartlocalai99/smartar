@@ -3,8 +3,60 @@ import { useEffect, useRef, useState } from 'react';
 
 import { HEART_ASSET_PATHS } from './heartContent';
 
+function registerSmoothAnchorComponent() {
+  const AFRAME = window.AFRAME;
+  if (!AFRAME || AFRAME.components['smooth-anchor']) {
+    return;
+  }
+
+  const THREE = AFRAME.THREE;
+
+  AFRAME.registerComponent('smooth-anchor', {
+    schema: {
+      target: { type: 'selector' },
+      damping: { type: 'number', default: 0.18 },
+    },
+    init() {
+      this.pos = new THREE.Vector3();
+      this.quat = new THREE.Quaternion();
+      this.scale = new THREE.Vector3();
+      this.hasPose = false;
+      this.el.object3D.visible = false;
+    },
+    tick() {
+      const targetObj = this.data.target && this.data.target.object3D;
+      if (!targetObj) {
+        return;
+      }
+
+      if (!targetObj.visible) {
+        this.el.object3D.visible = false;
+        this.hasPose = false;
+        return;
+      }
+
+      targetObj.updateMatrixWorld();
+      targetObj.matrixWorld.decompose(this.pos, this.quat, this.scale);
+
+      const obj = this.el.object3D;
+      if (!this.hasPose) {
+        obj.position.copy(this.pos);
+        obj.quaternion.copy(this.quat);
+        obj.scale.copy(this.scale);
+        this.hasPose = true;
+      } else {
+        obj.position.lerp(this.pos, this.data.damping);
+        obj.quaternion.slerp(this.quat, this.data.damping);
+        obj.scale.lerp(this.scale, this.data.damping);
+      }
+      obj.visible = true;
+    },
+  });
+}
+
 export default function HeartArScene() {
   const sceneRef = useRef(null);
+  const autoStartedRef = useRef(false);
   const [clientReady, setClientReady] = useState(false);
   const [aframeReady, setAframeReady] = useState(false);
   const [mindarReady, setMindarReady] = useState(false);
@@ -30,7 +82,7 @@ export default function HeartArScene() {
     const onError = () => {
       setCameraStarting(false);
       setCameraRunning(false);
-      setError('Camera could not open. Allow camera permission and try again.');
+      setError('Camera could not open. Tap anywhere to try again.');
     };
 
     scene.addEventListener('loaded', onLoaded);
@@ -52,18 +104,40 @@ export default function HeartArScene() {
     }
 
     const system = sceneRef.current?.systems?.['mindar-image-system'];
-    if (!system) return;
+    if (!system || cameraRunning || cameraStarting) return;
 
     setCameraStarting(true);
     setError('');
+
+    // Best-effort: real edge-to-edge fullscreen only works with a user
+    // gesture, and isn't supported by every mobile browser (notably plain
+    // iOS Safari tabs) — safe to ignore failures here.
+    try {
+      await document.documentElement.requestFullscreen?.();
+    } catch {
+      // ignore, not critical
+    }
 
     try {
       system.start();
     } catch {
       setCameraStarting(false);
-      setError('Camera could not open. Allow camera permission and try again.');
+      setError('Camera could not open. Tap anywhere to try again.');
     }
   };
+
+  // Try to start the camera automatically once the scene is ready, so most
+  // browsers never need an explicit "Start Camera" tap. Browsers that require
+  // a user gesture for camera/fullscreen (mainly iOS Safari) will silently
+  // fail this attempt, and the invisible full-screen overlay below still
+  // catches the first tap as a fallback.
+  useEffect(() => {
+    if (sceneLoaded && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      startCamera();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneLoaded]);
 
   if (!clientReady) return null;
 
@@ -72,7 +146,10 @@ export default function HeartArScene() {
       <Script
         src="https://aframe.io/releases/1.5.0/aframe.min.js"
         strategy="afterInteractive"
-        onLoad={() => setAframeReady(true)}
+        onLoad={() => {
+          registerSmoothAnchorComponent();
+          setAframeReady(true);
+        }}
         onError={() => setError('AR could not load. Check your internet connection.')}
       />
       {aframeReady ? (
@@ -101,7 +178,9 @@ export default function HeartArScene() {
 
           <a-camera position="0 0 0" look-controls="enabled: false" />
 
-          <a-entity mindar-image-target="targetIndex: 0">
+          <a-entity id="heartRawAnchor" mindar-image-target="targetIndex: 0" />
+
+          <a-entity smooth-anchor="target: #heartRawAnchor; damping: 0.18">
             <a-ambient-light intensity="1.25" />
             <a-directional-light position="1 2 1" intensity="1.5" />
             <a-gltf-model
@@ -115,18 +194,19 @@ export default function HeartArScene() {
       ) : null}
 
       {!cameraRunning ? (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black">
-          <div className="flex max-w-xs flex-col items-center gap-4 px-5 text-center">
-            {error ? <p className="text-sm leading-6 text-white">{error}</p> : null}
-            <button
-              type="button"
-              onClick={startCamera}
-              disabled={!sceneLoaded || cameraStarting}
-              className="rounded-full bg-white px-8 py-4 font-semibold text-black disabled:opacity-50"
-            >
-              {cameraStarting ? 'Opening Camera…' : sceneLoaded ? 'Open Camera' : 'Loading…'}
-            </button>
-          </div>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={startCamera}
+          className="absolute inset-0 z-20 flex items-center justify-center bg-black"
+        >
+          {error ? (
+            <p className="max-w-xs px-5 text-center text-sm leading-6 text-white">{error}</p>
+          ) : (
+            <p className="text-sm text-white/60">
+              {cameraStarting || sceneLoaded ? 'Starting camera…' : 'Loading AR…'}
+            </p>
+          )}
         </div>
       ) : null}
     </main>

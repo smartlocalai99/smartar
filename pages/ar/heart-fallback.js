@@ -116,8 +116,14 @@ export default function HeartFallbackPage() {
                   exposure="1.1"
                   environment-image="neutral"
                   ar="false"
-                  className="h-full w-full"
-                  style={{ background: 'linear-gradient(180deg, #020617, #0f172a)' }}
+                  class="h-full w-full"
+                  style={{
+                    background: 'linear-gradient(180deg, #020617, #0f172a)',
+                    // Let vertical swipes scroll the page instead of being
+                    // captured for orbit control, so mobile users aren't
+                    // stuck unable to scroll past the 3D viewer.
+                    touchAction: 'pan-y',
+                  }}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center p-6 text-center text-slate-300">
