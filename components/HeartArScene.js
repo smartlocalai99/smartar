@@ -8,6 +8,7 @@ export default function HeartArScene({
   modelAssetId = 'trackedModelAsset',
   modelScale = '0.14 0.14 0.14',
   modelPosition = '0 0 0.08',
+  hotspots = [],
 }) {
   const sceneRef = useRef(null);
   const modelPivotRef = useRef(null);
@@ -21,6 +22,7 @@ export default function HeartArScene({
   const [cameraRunning, setCameraRunning] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
   const [error, setError] = useState('');
+  const [selectedHotspot, setSelectedHotspot] = useState(null);
 
   useEffect(() => {
     cameraStartingRef.current = cameraStarting;
@@ -172,6 +174,21 @@ export default function HeartArScene({
     };
   }, [cameraRunning]);
 
+  useEffect(() => {
+    if (!sceneLoaded || hotspots.length === 0 || !sceneRef.current) return undefined;
+    const nodes = [...sceneRef.current.querySelectorAll('[data-ar-hotspot]')];
+    const listeners = nodes.map((node) => {
+      const handler = (event) => {
+        event.stopPropagation();
+        const selected = hotspots.find((item) => item.id === node.dataset.arHotspot);
+        if (selected) setSelectedHotspot(selected);
+      };
+      node.addEventListener('click', handler);
+      return [node, handler];
+    });
+    return () => listeners.forEach(([node, handler]) => node.removeEventListener('click', handler));
+  }, [hotspots, sceneLoaded]);
+
   if (!clientReady) return null;
 
   return (
@@ -206,7 +223,12 @@ export default function HeartArScene({
             <a-asset-item id={modelAssetId} src={assetPaths.model} />
           </a-assets>
 
-          <a-camera position="0 0 0" look-controls="enabled: false" />
+          <a-camera
+            position="0 0 0"
+            look-controls="enabled: false"
+            cursor={hotspots.length ? 'rayOrigin: mouse' : undefined}
+            raycaster={hotspots.length ? 'objects: .ar-hotspot' : undefined}
+          />
 
           <a-entity mindar-image-target="targetIndex: 0">
             <a-ambient-light intensity="1.25" />
@@ -217,6 +239,17 @@ export default function HeartArScene({
                 rotation="0 0 0"
                 scale={modelScale}
               />
+              {hotspots.map((item) => (
+                <a-entity
+                  key={item.id}
+                  data-ar-hotspot={item.id}
+                  class="ar-hotspot"
+                  position={item.position}
+                  geometry="primitive: sphere; radius: 0.075"
+                  material="color: #22d3ee; emissive: #0891b2; emissiveIntensity: 1; opacity: 0.95"
+                  text={`value: ${item.number}; align: center; color: #020617; width: 1.2; zOffset: 0.076`}
+                />
+              ))}
             </a-entity>
           </a-entity>
         </a-scene>
@@ -237,6 +270,19 @@ export default function HeartArScene({
             </p>
           )}
         </div>
+      ) : null}
+
+      {cameraRunning && selectedHotspot ? (
+        <button
+          type="button"
+          onClick={() => setSelectedHotspot(null)}
+          className="absolute bottom-4 left-4 right-4 z-30 rounded-3xl border border-white/15 bg-slate-950/90 p-4 text-left text-white shadow-2xl backdrop-blur-md"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">Spine part {selectedHotspot.number}</p>
+          <h2 className="mt-1 text-xl font-semibold">{selectedHotspot.title}</h2>
+          <p className="mt-2 text-sm leading-5 text-slate-200">{selectedHotspot.patient}</p>
+          <p className="mt-2 text-xs font-medium text-cyan-200">{selectedHotspot.keyPoint}</p>
+        </button>
       ) : null}
     </main>
   );

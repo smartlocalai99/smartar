@@ -1,5 +1,5 @@
 import HeartArScene from './HeartArScene';
-import { SPINE_ASSET_PATHS } from './spineContent';
+import { SPINE_ASSET_PATHS, SPINE_HOTSPOTS } from './spineContent';
 
 export default function SpineArScene() {
   return (
@@ -8,6 +8,7 @@ export default function SpineArScene() {
       modelAssetId="spineModelAsset"
       modelPosition="0 0 0.035"
       modelScale="0.032 0.032 0.032"
+      hotspots={SPINE_HOTSPOTS}
     />
   );
 }
