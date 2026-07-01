@@ -27,6 +27,18 @@ const nextConfig = {
         source: '/ar/qr-spine.html',
         destination: '/ar/qr-spine',
       },
+      {
+        source: '/ar/chloroplast.html',
+        destination: '/ar/chloroplast',
+      },
+      {
+        source: '/ar/chloroplast-fallback.html',
+        destination: '/ar/chloroplast-fallback',
+      },
+      {
+        source: '/ar/qr-chloroplast.html',
+        destination: '/ar/qr-chloroplast',
+      },
     ];
   },
 };
