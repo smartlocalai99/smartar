@@ -39,6 +39,18 @@ const nextConfig = {
         source: '/ar/qr-chloroplast.html',
         destination: '/ar/qr-chloroplast',
       },
+      {
+        source: '/ar/animal-cell.html',
+        destination: '/ar/animal-cell',
+      },
+      {
+        source: '/ar/animal-cell-fallback.html',
+        destination: '/ar/animal-cell-fallback',
+      },
+      {
+        source: '/ar/qr-animal-cell.html',
+        destination: '/ar/qr-animal-cell',
+      },
     ];
   },
 };

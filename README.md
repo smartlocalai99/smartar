@@ -35,6 +35,15 @@ This project is a mobile-first Next.js Pages Router demo for a NEET Biology Huma
 - Printable QR page: `/ar/qr-chloroplast`
 - QR rewrite: `/ar/qr-chloroplast.html`
 
+### Animal Cell AR
+
+- Main AR page: `/ar/animal-cell`
+- Compatibility rewrite: `/ar/animal-cell.html`
+- Fallback viewer: `/ar/animal-cell-fallback`
+- Fallback rewrite: `/ar/animal-cell-fallback.html`
+- Printable QR page: `/ar/qr-animal-cell`
+- QR rewrite: `/ar/qr-animal-cell.html`
+
 ## How to use
 
 1. Open `/ar/qr-heart`.
