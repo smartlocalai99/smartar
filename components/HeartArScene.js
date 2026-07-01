@@ -262,7 +262,7 @@ export default function HeartArScene() {
           vr-mode-ui="enabled: false"
           device-orientation-permission-ui="enabled: false"
           embedded
-          className="absolute inset-0 z-10"
+          class="absolute inset-0 z-10"
         >
           <a-assets timeout="10000">
             <a-asset-item id="heartModelAsset" src={HEART_ASSET_PATHS.model} />
