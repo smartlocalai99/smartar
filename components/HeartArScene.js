@@ -45,6 +45,41 @@ export default function HeartArScene() {
   const [sceneLoaded, setSceneLoaded] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
   const [cameraError, setCameraError] = useState('');
+  const cameraStartingRef = useRef(false);
+
+  useEffect(() => {
+    cameraStartingRef.current = cameraStarting;
+  }, [cameraStarting]);
+
+  useEffect(() => {
+    // MindAR's internal AR-controller startup (target loading, WebGL tracking
+    // backend init) can throw/reject without ever emitting its own 'arError'
+    // event, so a real failure there would otherwise leave the UI stuck on
+    // "Starting camera..." with no feedback. Catch it globally while a camera
+    // start is in flight and surface it immediately instead of relying on the
+    // 15s timeout fallback.
+    const handleFatal = (message) => {
+      if (!cameraStartingRef.current) {
+        return;
+      }
+      setCameraStarting(false);
+      setSceneState('error');
+      setStatusText('Camera could not start');
+      setCameraError(
+        `The AR engine crashed while starting (${message}). Try a different browser (Chrome or Safari, not an in-app browser), make sure hardware acceleration is on, then tap Try Camera Again.`
+      );
+    };
+    const onError = (event) => handleFatal(event.message || 'script error');
+    const onRejection = (event) => handleFatal(event.reason?.message || String(event.reason));
+
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onRejection);
+
+    return () => {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onRejection);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,15 +132,34 @@ export default function HeartArScene() {
 
     const handleSceneLoaded = () => setSceneLoaded(true);
 
+    const handleArReady = () => {
+      setCameraStarting(false);
+      setSceneState('scanning');
+      setStatusText('Camera is open — point it at the Heart AR poster.');
+    };
+
+    const handleArError = () => {
+      setCameraStarting(false);
+      setSceneState('error');
+      setStatusText('Camera could not start');
+      setCameraError(
+        'The AR camera failed to start. This can happen if permission was denied, another app is using the camera, or this device/browser cannot run the AR engine. Try Camera Again, or use a different browser (Chrome/Safari, not an in-app browser).'
+      );
+    };
+
     targetEl.addEventListener('targetFound', handleFound);
     targetEl.addEventListener('targetLost', handleLost);
     sceneEl.addEventListener('loaded', handleSceneLoaded);
+    sceneEl.addEventListener('arReady', handleArReady);
+    sceneEl.addEventListener('arError', handleArError);
     if (sceneEl.hasLoaded) setSceneLoaded(true);
 
     return () => {
       targetEl.removeEventListener('targetFound', handleFound);
       targetEl.removeEventListener('targetLost', handleLost);
       sceneEl.removeEventListener('loaded', handleSceneLoaded);
+      sceneEl.removeEventListener('arReady', handleArReady);
+      sceneEl.removeEventListener('arError', handleArError);
     };
   }, [aframeReady, mindarReady]);
 
@@ -133,22 +187,47 @@ export default function HeartArScene() {
     setSceneState('starting');
     setStatusText('Starting camera…');
 
+    // MindAR's system.start() is not a Promise and does not report failures back to
+    // the caller — it opens the camera internally and only tells us the outcome via
+    // the 'arReady' / 'arError' events wired up above. We probe getUserMedia ourselves
+    // first so we can show a precise reason (denied vs no camera vs already in use)
+    // instead of MindAR's generic silent failure.
     try {
-      await system.start();
-      setSceneState('scanning');
-      setStatusText('Camera is open — point it at the Heart AR poster.');
+      const probeStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+        audio: false,
+      });
+      probeStream.getTracks().forEach((track) => track.stop());
     } catch (error) {
       const denied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError';
+      const notFound = error?.name === 'NotFoundError' || error?.name === 'OverconstrainedError';
+      setCameraStarting(false);
       setSceneState('error');
       setStatusText('Camera could not start');
       setCameraError(
         denied
           ? 'Camera permission was denied. Allow camera access in your browser settings, then tap Try Camera Again.'
+          : notFound
+          ? 'No camera was found on this device.'
           : 'No camera could be opened. Close other apps using the camera, check browser permission, and try again.'
       );
-    } finally {
-      setCameraStarting(false);
+      return;
     }
+
+    system.start();
+
+    // Fallback in case neither arReady nor arError ever fires (e.g. AR engine hangs).
+    window.setTimeout(() => {
+      setCameraStarting((starting) => {
+        if (starting) {
+          setSceneState('error');
+          setStatusText('Camera could not start');
+          setCameraError('The AR camera timed out while starting. Try Camera Again.');
+          return false;
+        }
+        return starting;
+      });
+    }, 15000);
   };
 
   if (!isClient) {
