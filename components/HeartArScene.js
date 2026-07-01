@@ -108,6 +108,7 @@ export default function HeartArScene({
     let lastX = 0;
     let lastY = 0;
     let pinchDistance = 0;
+    let dragDistance = 0;
 
     const applyZoom = (nextZoom) => {
       const pivot = modelPivotRef.current;
@@ -126,6 +127,7 @@ export default function HeartArScene({
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       lastX = event.clientX;
       lastY = event.clientY;
+      dragDistance = 0;
       if (pointers.size === 2) pinchDistance = distanceBetweenPointers();
     };
     const move = (event) => {
@@ -139,12 +141,15 @@ export default function HeartArScene({
       } else if (pointers.size === 1) {
         const dx = event.clientX - lastX;
         const dy = event.clientY - lastY;
+        dragDistance += Math.hypot(dx, dy);
         lastX = event.clientX;
         lastY = event.clientY;
-        modelPivotRef.current.object3D.rotation.y += dx * 0.012;
-        modelPivotRef.current.object3D.rotation.x += dy * 0.012;
+        if (dragDistance > 6) {
+          modelPivotRef.current.object3D.rotation.y += dx * 0.012;
+          modelPivotRef.current.object3D.rotation.x += dy * 0.012;
+        }
       }
-      event.preventDefault();
+      if (pointers.size === 2 || dragDistance > 6) event.preventDefault();
     };
     const end = (event) => {
       pointers.delete(event.pointerId);
@@ -185,10 +190,14 @@ export default function HeartArScene({
         const selected = hotspots.find((item) => item.id === node.dataset.arHotspot);
         if (selected) setSelectedHotspot(selected);
       };
+      node.addEventListener('mousedown', handler);
       node.addEventListener('click', handler);
       return [node, handler];
     });
-    return () => listeners.forEach(([node, handler]) => node.removeEventListener('click', handler));
+    return () => listeners.forEach(([node, handler]) => {
+      node.removeEventListener('mousedown', handler);
+      node.removeEventListener('click', handler);
+    });
   }, [hotspots, sceneLoaded]);
 
   if (!clientReady) return null;
@@ -228,7 +237,7 @@ export default function HeartArScene({
           <a-camera
             position="0 0 0"
             look-controls="enabled: false"
-            cursor={hotspots.length ? 'rayOrigin: mouse' : undefined}
+            cursor={hotspots.length ? 'rayOrigin: mouse; fuse: false; mouseCursorStylesEnabled: false' : undefined}
             raycaster={hotspots.length ? 'objects: .ar-hotspot' : undefined}
           />
 
