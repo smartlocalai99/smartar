@@ -142,7 +142,7 @@ export default function HeartArScene() {
         />
       ) : null}
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.22),_transparent_28%),linear-gradient(180deg,rgba(2,6,23,0.9),rgba(2,6,23,0.45))]" />
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.22),_transparent_28%),linear-gradient(180deg,rgba(2,6,23,0.9),rgba(2,6,23,0.45))]" />
 
       {sceneCanRender ? (
         <a-scene
@@ -153,7 +153,7 @@ export default function HeartArScene() {
           vr-mode-ui="enabled: false"
           device-orientation-permission-ui="enabled: false"
           embedded
-          className="absolute inset-0"
+          className="absolute inset-0 z-10"
         >
           <a-assets timeout="10000">
             <a-asset-item id="heartModelAsset" src={HEART_ASSET_PATHS.model} />
@@ -176,7 +176,7 @@ export default function HeartArScene() {
         </a-scene>
       ) : null}
 
-      <div className="relative z-10 flex min-h-[100svh] flex-col">
+      <div className="relative z-20 flex min-h-[100svh] flex-col">
         <div className="px-4 pt-4 sm:px-6 sm:pt-6">
           <div className="mx-auto max-w-3xl rounded-full border border-white/10 bg-slate-950/70 px-4 py-3 text-center text-sm font-medium text-slate-100 shadow-lg shadow-black/20 backdrop-blur-md sm:text-base">
             {sceneState === 'found' ? 'Poster detected ✅' : statusText}
