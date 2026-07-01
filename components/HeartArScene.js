@@ -6,7 +6,6 @@ import NeetInfoPanel from './NeetInfoPanel';
 import {
   HEART_ASSET_PATHS,
   HEART_CONTENT,
-  HEART_TOPICS,
 } from './heartContent';
 
 function useClientReady() {
@@ -36,26 +35,22 @@ export default function HeartArScene() {
   const [aframeReady, setAframeReady] = useState(false);
   const [mindarReady, setMindarReady] = useState(false);
   const [scriptError, setScriptError] = useState('');
-  const [assetsChecked, setAssetsChecked] = useState(false);
   const [modelAvailable, setModelAvailable] = useState(null);
   const [targetAvailable, setTargetAvailable] = useState(null);
   const [posterAvailable, setPosterAvailable] = useState(null);
-  const [bloodFlowModelAvailable, setBloodFlowModelAvailable] = useState(null);
   const [statusText, setStatusText] = useState('Point your camera at the Heart AR poster.');
   const [activeTopic, setActiveTopic] = useState('default');
   const [detail, setDetail] = useState(HEART_CONTENT.default);
-  const [bloodFlowActive, setBloodFlowActive] = useState(false);
   const [sceneState, setSceneState] = useState('loading');
 
   useEffect(() => {
     let cancelled = false;
 
     async function runChecks() {
-      const [model, target, poster, bloodFlow] = await Promise.all([
+      const [model, target, poster] = await Promise.all([
         checkAsset(HEART_ASSET_PATHS.model),
         checkAsset(HEART_ASSET_PATHS.target),
         checkAsset(HEART_ASSET_PATHS.poster),
-        checkAsset(HEART_ASSET_PATHS.bloodFlowModel),
       ]);
 
       if (cancelled) {
@@ -65,8 +60,6 @@ export default function HeartArScene() {
       setModelAvailable(model);
       setTargetAvailable(target);
       setPosterAvailable(poster);
-      setBloodFlowModelAvailable(bloodFlow);
-      setAssetsChecked(true);
     }
 
     runChecks();
@@ -119,79 +112,13 @@ export default function HeartArScene() {
       targetEl.removeEventListener('targetLost', handleLost);
       modelEl.removeEventListener('model-error', handleModelError);
     };
-  }, [aframeReady, mindarReady, bloodFlowActive]);
-
-  const warnings = useMemo(() => {
-    const items = [];
-
-    if (assetsChecked && modelAvailable === false) {
-      items.push({
-        label: 'Heart model is missing',
-        message: 'The main AR model was not found, so the anchor cannot render the 3D heart.',
-        path: HEART_ASSET_PATHS.model,
-      });
-    }
-
-    if (assetsChecked && targetAvailable === false) {
-      items.push({
-        label: 'MindAR target is missing',
-        message: 'The image target file is required for poster detection on the printed image.',
-        path: HEART_ASSET_PATHS.target,
-      });
-    }
-
-    if (assetsChecked && posterAvailable === false) {
-      items.push({
-        label: 'Poster image is missing',
-        message: 'The poster preview image is missing, so the QR poster page cannot show the tracking image.',
-        path: HEART_ASSET_PATHS.poster,
-      });
-    }
-
-    return items;
-  }, [assetsChecked, modelAvailable, posterAvailable, targetAvailable]);
+  }, [aframeReady, mindarReady]);
 
   const sceneCanRender = Boolean(isClient && aframeReady && mindarReady);
 
-  const currentSrc = bloodFlowActive && bloodFlowModelAvailable ? HEART_ASSET_PATHS.bloodFlowModel : HEART_ASSET_PATHS.model;
-
   const handleTopicChange = (topic) => {
     setActiveTopic(topic);
-    if (topic === 'bloodFlow') {
-      if (!bloodFlowModelAvailable) {
-        setBloodFlowActive(false);
-        setDetail({
-          title: 'Blood Flow',
-          text: 'Blood flow model not added yet. Add public/models/heart-bloodflow.glb to enable this.',
-        });
-        return;
-      }
-
-      setBloodFlowActive((current) => !current);
-      setDetail(HEART_CONTENT.bloodFlow);
-      return;
-    }
-
-    setBloodFlowActive(false);
     setDetail(HEART_CONTENT[topic] || HEART_CONTENT.default);
-  };
-
-  const handleBloodFlowToggle = () => {
-    setActiveTopic('bloodFlow');
-    if (!bloodFlowModelAvailable) {
-      setBloodFlowActive(false);
-      setDetail({
-        title: 'Blood Flow',
-        text: 'Blood flow model not added yet. Add public/models/heart-bloodflow.glb to enable this.',
-      });
-      return;
-    }
-
-    setBloodFlowActive((current) => {
-      const next = !current;
-      setDetail(HEART_CONTENT.bloodFlow);
-      return next;
-    });
   };
 
   if (!isClient) {
@@ -229,12 +156,7 @@ export default function HeartArScene() {
           className="absolute inset-0"
         >
           <a-assets timeout="10000">
-            {modelAvailable !== false ? (
-              <a-asset-item id="heartModelAsset" src={HEART_ASSET_PATHS.model} />
-            ) : null}
-            {bloodFlowModelAvailable ? (
-              <a-asset-item id="heartBloodFlowAsset" src={HEART_ASSET_PATHS.bloodFlowModel} />
-            ) : null}
+            <a-asset-item id="heartModelAsset" src={HEART_ASSET_PATHS.model} />
           </a-assets>
 
           <a-camera position="0 0 0" look-controls="enabled: false" />
@@ -242,25 +164,13 @@ export default function HeartArScene() {
           <a-entity mindar-image-target="targetIndex: 0" ref={targetRef}>
             <a-ambient-light intensity="1.25" />
             <a-directional-light position="1 2 1" intensity="1.5" />
-            {modelAvailable !== false ? (
-              <a-gltf-model
-                ref={modelRef}
-                src={currentSrc === HEART_ASSET_PATHS.bloodFlowModel ? '#heartBloodFlowAsset' : '#heartModelAsset'}
-                position="0 0 0"
-                rotation="0 0 0"
-                scale="0.35 0.35 0.35"
-              />
-            ) : (
-              <a-plane width="1.4" height="0.45" color="#7f1d1d" position="0 0 0">
-                <a-text
-                  value="Heart model missing"
-                  align="center"
-                  color="#ffffff"
-                  width="2.4"
-                  position="0 0 0.01"
-                />
-              </a-plane>
-            )}
+            <a-gltf-model
+              ref={modelRef}
+              src="#heartModelAsset"
+              position="0 0 0"
+              rotation="0 0 0"
+              scale="0.35 0.35 0.35"
+            />
             {/* Adjust position, rotation, and scale here if the heart needs to sit higher, turn, or grow/shrink on the poster. */}
           </a-entity>
         </a-scene>
@@ -288,7 +198,23 @@ export default function HeartArScene() {
                 </p>
               ) : null}
               <div className="mt-4">
-                <AssetWarnings warnings={warnings} />
+                <AssetWarnings warnings={[
+                  ...(modelAvailable === false ? [{
+                    label: 'Heart model is missing',
+                    message: 'Add public/models/heart.glb so the heart can render on the poster.',
+                    path: HEART_ASSET_PATHS.model,
+                  }] : []),
+                  ...(targetAvailable === false ? [{
+                    label: 'MindAR target is missing',
+                    message: 'Add public/targets/heart-poster.mind so poster tracking can start.',
+                    path: HEART_ASSET_PATHS.target,
+                  }] : []),
+                  ...(posterAvailable === false ? [{
+                    label: 'Poster image is missing',
+                    message: 'Add public/posters/heart.png so the QR poster page can show the tracking image.',
+                    path: HEART_ASSET_PATHS.poster,
+                  }] : []),
+                ]} />
               </div>
               <p className="mt-4 text-xs leading-5 text-slate-400">
                 If the poster target or heart model is missing, the camera can still open but tracking will not start until those files are added.
@@ -302,14 +228,7 @@ export default function HeartArScene() {
             statusText={sceneState === 'found' ? 'Poster detected' : 'Move camera to the poster'}
             activeTopic={activeTopic}
             onTopicChange={handleTopicChange}
-            onBloodFlowToggle={handleBloodFlowToggle}
-            bloodFlowActive={bloodFlowActive}
-            bloodFlowAvailable={bloodFlowModelAvailable === true}
           />
-
-          <div className="mt-3 sm:mt-4">
-            <AssetWarnings warnings={warnings} />
-          </div>
         </div>
       </div>
     </main>

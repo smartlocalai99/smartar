@@ -1,6 +1,5 @@
 export const HEART_ASSET_PATHS = {
   model: '/models/heart.glb',
-  bloodFlowModel: '/models/heart-bloodflow.glb',
   target: '/targets/heart-poster.mind',
   poster: '/posters/heart.png',
 };
@@ -11,7 +10,6 @@ export const HEART_TOPICS = [
   'leftVentricle',
   'rightAtrium',
   'valves',
-  'bloodFlow',
 ];
 
 export const HEART_CONTENT = {
@@ -39,11 +37,6 @@ export const HEART_CONTENT = {
     text:
       'Heart valves prevent backflow of blood. NEET point: Tricuspid valve is on the right side, bicuspid/mitral valve is on the left side.',
   },
-  bloodFlow: {
-    title: 'Blood Flow',
-    text:
-      'Deoxygenated blood goes from body → right atrium → right ventricle → lungs. Oxygenated blood goes from lungs → left atrium → left ventricle → aorta → body.',
-  },
 };
 
 export const HEART_DISCLOSURE =
@@ -54,5 +47,4 @@ export const HEART_BUTTONS = [
   { key: 'leftVentricle', label: 'Left Ventricle' },
   { key: 'rightAtrium', label: 'Right Atrium' },
   { key: 'valves', label: 'Valves' },
-  { key: 'bloodFlow', label: 'Blood Flow' },
 ];

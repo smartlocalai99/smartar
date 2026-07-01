@@ -7,7 +7,6 @@ This project is a mobile-first Next.js Pages Router demo for a NEET Biology Huma
 1. Put the heart model in `public/models/heart.glb`.
 2. Put the poster image in `public/posters/heart.png`.
 3. Compile the poster image into `public/targets/heart-poster.mind` using the MindAR image target compiler.
-4. If you have a separate blood flow model, place it in `public/models/heart-bloodflow.glb`.
 
 ## Routes
 
@@ -47,4 +46,3 @@ npm run dev
 
 - The main AR experience is marker/image tracking, not a floor-based viewer.
 - If the heart model, MindAR target, or poster image is missing, the UI shows a clear warning instead of failing silently.
-- If marker AR is unavailable on a device, open `/ar/heart-fallback`.
