@@ -35,6 +35,7 @@ export default function HeartArScene() {
   const modelRef = useRef(null);
   const [aframeReady, setAframeReady] = useState(false);
   const [mindarReady, setMindarReady] = useState(false);
+  const [scriptError, setScriptError] = useState('');
   const [assetsChecked, setAssetsChecked] = useState(false);
   const [modelAvailable, setModelAvailable] = useState(null);
   const [targetAvailable, setTargetAvailable] = useState(null);
@@ -203,12 +204,16 @@ export default function HeartArScene() {
         src="https://aframe.io/releases/1.5.0/aframe.min.js"
         strategy="afterInteractive"
         onLoad={() => setAframeReady(true)}
+        onError={() => setScriptError('A-Frame failed to load. Refresh the page and check your connection.')}
       />
-      <Script
-        src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"
-        strategy="afterInteractive"
-        onLoad={() => setMindarReady(true)}
-      />
+      {aframeReady ? (
+        <Script
+          src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"
+          strategy="afterInteractive"
+          onLoad={() => setMindarReady(true)}
+          onError={() => setScriptError('MindAR failed to load. Refresh the page and check your connection.')}
+        />
+      ) : null}
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.22),_transparent_28%),linear-gradient(180deg,rgba(2,6,23,0.9),rgba(2,6,23,0.45))]" />
 
@@ -277,6 +282,11 @@ export default function HeartArScene() {
               <p className="mt-2 leading-6 text-slate-300">
                 The marker AR scene is waiting for the client scripts to load.
               </p>
+              {scriptError ? (
+                <p className="mt-3 rounded-2xl border border-amber-400/30 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+                  {scriptError}
+                </p>
+              ) : null}
               <div className="mt-4">
                 <AssetWarnings warnings={warnings} />
               </div>
