@@ -2,7 +2,7 @@ import Script from 'next/script';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import AssetWarnings from '../../components/AssetWarnings';
-import { HEART_ASSET_PATHS, HEART_REMOTE_POSTER_IMAGE } from '../../components/heartContent';
+import { HEART_ASSET_PATHS } from '../../components/heartContent';
 
 async function checkAsset(path) {
   try {
@@ -18,7 +18,6 @@ export default function QrHeartPage() {
   const [clientUrl, setClientUrl] = useState('');
   const [scriptReady, setScriptReady] = useState(false);
   const [posterAvailable, setPosterAvailable] = useState(null);
-  const posterImageSrc = posterAvailable === false ? HEART_REMOTE_POSTER_IMAGE : HEART_ASSET_PATHS.poster;
 
   useEffect(() => {
     setClientUrl(`${window.location.origin}/ar/heart`);
@@ -124,7 +123,7 @@ export default function QrHeartPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Tracking image</p>
             <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
               <img
-                src={posterImageSrc}
+                src={HEART_ASSET_PATHS.poster}
                 alt="Human heart poster tracking image"
                 className="h-full w-full object-cover"
               />

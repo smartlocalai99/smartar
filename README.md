@@ -5,7 +5,7 @@ This project is a mobile-first Next.js Pages Router demo for a NEET Biology Huma
 ## File placement
 
 1. Put the heart model in `public/models/heart.glb`.
-2. Put the poster image in `public/posters/heart-poster.png`.
+2. Put the poster image in `public/posters/heart.png`.
 3. Compile the poster image into `public/targets/heart-poster.mind` using the MindAR image target compiler.
 4. If you have a separate blood flow model, place it in `public/models/heart-bloodflow.glb`.
 
