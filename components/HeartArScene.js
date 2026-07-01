@@ -150,9 +150,7 @@ export default function HeartArScene() {
     return items;
   }, [assetsChecked, modelAvailable, posterAvailable, targetAvailable]);
 
-  const sceneCanRender = Boolean(
-    isClient && assetsChecked && aframeReady && mindarReady && modelAvailable && targetAvailable,
-  );
+  const sceneCanRender = Boolean(isClient && aframeReady && mindarReady);
 
   const currentSrc = bloodFlowActive && bloodFlowModelAvailable ? HEART_ASSET_PATHS.bloodFlowModel : HEART_ASSET_PATHS.model;
 
@@ -226,7 +224,9 @@ export default function HeartArScene() {
           className="absolute inset-0"
         >
           <a-assets timeout="10000">
-            <a-asset-item id="heartModelAsset" src={HEART_ASSET_PATHS.model} />
+            {modelAvailable !== false ? (
+              <a-asset-item id="heartModelAsset" src={HEART_ASSET_PATHS.model} />
+            ) : null}
             {bloodFlowModelAvailable ? (
               <a-asset-item id="heartBloodFlowAsset" src={HEART_ASSET_PATHS.bloodFlowModel} />
             ) : null}
@@ -237,13 +237,25 @@ export default function HeartArScene() {
           <a-entity mindar-image-target="targetIndex: 0" ref={targetRef}>
             <a-ambient-light intensity="1.25" />
             <a-directional-light position="1 2 1" intensity="1.5" />
-            <a-gltf-model
-              ref={modelRef}
-              src={currentSrc === HEART_ASSET_PATHS.bloodFlowModel ? '#heartBloodFlowAsset' : '#heartModelAsset'}
-              position="0 0 0"
-              rotation="0 0 0"
-              scale="0.35 0.35 0.35"
-            />
+            {modelAvailable !== false ? (
+              <a-gltf-model
+                ref={modelRef}
+                src={currentSrc === HEART_ASSET_PATHS.bloodFlowModel ? '#heartBloodFlowAsset' : '#heartModelAsset'}
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="0.35 0.35 0.35"
+              />
+            ) : (
+              <a-plane width="1.4" height="0.45" color="#7f1d1d" position="0 0 0">
+                <a-text
+                  value="Heart model missing"
+                  align="center"
+                  color="#ffffff"
+                  width="2.4"
+                  position="0 0 0.01"
+                />
+              </a-plane>
+            )}
             {/* Adjust position, rotation, and scale here if the heart needs to sit higher, turn, or grow/shrink on the poster. */}
           </a-entity>
         </a-scene>
@@ -263,13 +275,13 @@ export default function HeartArScene() {
             <div className="mb-3 rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-sm text-slate-100 backdrop-blur-md sm:p-5">
               <p className="font-semibold text-white">AR loading state</p>
               <p className="mt-2 leading-6 text-slate-300">
-                The marker AR scene is waiting for client scripts and the required files to load.
+                The marker AR scene is waiting for the client scripts to load.
               </p>
               <div className="mt-4">
                 <AssetWarnings warnings={warnings} />
               </div>
               <p className="mt-4 text-xs leading-5 text-slate-400">
-                If the poster target or heart model is missing, add the files in the public folders listed below and reload.
+                If the poster target or heart model is missing, the camera can still open but tracking will not start until those files are added.
               </p>
             </div>
           ) : null}
