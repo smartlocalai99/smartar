@@ -7,7 +7,8 @@ export default function SpineArScene() {
       assetPaths={SPINE_ASSET_PATHS}
       modelAssetId="spineModelAsset"
       modelPosition="0 0 0.035"
-      modelScale="0.032 0.032 0.032"
+      modelLocalPosition="0.086 -0.778 0"
+      modelScale="0.036 0.036 0.036"
       hotspots={SPINE_HOTSPOTS}
     />
   );

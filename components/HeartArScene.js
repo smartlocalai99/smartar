@@ -8,6 +8,7 @@ export default function HeartArScene({
   modelAssetId = 'trackedModelAsset',
   modelScale = '0.14 0.14 0.14',
   modelPosition = '0 0 0.08',
+  modelLocalPosition = '0 0 0',
   hotspots = [],
 }) {
   const sceneRef = useRef(null);
@@ -236,6 +237,7 @@ export default function HeartArScene({
             <a-entity ref={modelPivotRef} position={modelPosition}>
               <a-gltf-model
                 src={`#${modelAssetId}`}
+                position={modelLocalPosition}
                 rotation="0 0 0"
                 scale={modelScale}
               />
@@ -245,9 +247,9 @@ export default function HeartArScene({
                   data-ar-hotspot={item.id}
                   class="ar-hotspot"
                   position={item.position}
-                  geometry="primitive: sphere; radius: 0.075"
+                  geometry="primitive: sphere; radius: 0.045"
                   material="color: #22d3ee; emissive: #0891b2; emissiveIntensity: 1; opacity: 0.95"
-                  text={`value: ${item.number}; align: center; color: #020617; width: 1.2; zOffset: 0.076`}
+                  text={`value: ${item.number}; align: center; color: #020617; width: 0.72; zOffset: 0.046`}
                 />
               ))}
             </a-entity>
