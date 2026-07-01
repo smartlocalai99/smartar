@@ -10,6 +10,8 @@ html,
 body,
 #__next {
   height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -38,6 +40,19 @@ model-viewer {
   margin: 0 !important;
 }
 
-.heart-ar-scene video {
+body > video,
+.heart-ar-scene video,
+video[playsinline] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
   object-fit: cover !important;
+  margin: 0 !important;
+}
+
+.heart-ar-scene {
+  display: block !important;
+  max-width: none !important;
+  max-height: none !important;
 }
