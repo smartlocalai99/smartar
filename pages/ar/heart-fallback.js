@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Script from 'next/script';
 import { useEffect, useMemo, useState } from 'react';
 
 import AssetWarnings from '../../components/AssetWarnings';
@@ -17,7 +16,6 @@ async function checkAsset(path) {
 
 export default function HeartFallbackPage() {
   const [ready, setReady] = useState(false);
-  const [modelViewerReady, setModelViewerReady] = useState(false);
   const [assetState, setAssetState] = useState({ model: null, poster: null });
   const [activeTopic, setActiveTopic] = useState('default');
   const [detail, setDetail] = useState(HEART_CONTENT.default);
@@ -75,13 +73,6 @@ export default function HeartFallbackPage() {
 
   return (
     <main className="min-h-[100svh] bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.16),_transparent_28%),linear-gradient(180deg,#020617_0%,#0f172a_100%)] px-4 py-4 text-white sm:px-6 sm:py-6">
-      <Script
-        src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"
-        strategy="afterInteractive"
-        type="module"
-        onLoad={() => setModelViewerReady(true)}
-      />
-
       <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-6xl flex-col gap-4 sm:min-h-[calc(100vh-3rem)]">
         <div className="rounded-3xl border border-white/10 bg-slate-950/75 p-4 shadow-xl shadow-black/20 backdrop-blur-md sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -103,32 +94,23 @@ export default function HeartFallbackPage() {
 
         <div className="grid flex-1 gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <section className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/80 shadow-xl shadow-black/20">
-            <div className="h-[60vh] min-h-[26rem]">
-              {modelViewerReady && assetState.model !== false ? (
-                <model-viewer
-                  src={HEART_ASSET_PATHS.model}
-                  alt="Human heart 3D model"
-                  camera-controls
-                  auto-rotate
-                  auto-rotate-delay="0"
-                  rotation-per-second="20deg"
-                  shadow-intensity="1"
-                  exposure="1.1"
-                  environment-image="neutral"
-                  ar="false"
+            <div className="h-[60vh] min-h-[26rem] bg-slate-950">
+              <div className="h-full w-full overflow-hidden">
+                <iframe
+                  title="Cutted_Heart_Simulation"
+                  frameBorder="0"
+                  allowFullScreen
+                  mozallowfullscreen="true"
+                  webkitallowfullscreen="true"
+                  allow="autoplay; fullscreen; xr-spatial-tracking"
+                  xr-spatial-tracking="true"
+                  execution-while-out-of-viewport="true"
+                  execution-while-not-rendered="true"
+                  web-share="true"
+                  src="https://sketchfab.com/models/0acf946a98ca40908f40cc3c402f1bc7/embed"
                   className="h-full w-full"
-                  style={{ background: 'linear-gradient(180deg, #020617, #0f172a)' }}
                 />
-              ) : (
-                <div className="flex h-full items-center justify-center p-6 text-center text-slate-300">
-                  <div className="max-w-md space-y-3">
-                    <p className="text-lg font-semibold text-white">Loading 3D viewer...</p>
-                    <p className="text-sm leading-6">
-                      The fallback viewer waits for the model-viewer script and the heart model file before rendering.
-                    </p>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           </section>
 
