@@ -15,6 +15,18 @@ const nextConfig = {
         source: '/ar/qr-heart.html',
         destination: '/ar/qr-heart',
       },
+      {
+        source: '/ar/spine.html',
+        destination: '/ar/spine',
+      },
+      {
+        source: '/ar/spine-fallback.html',
+        destination: '/ar/spine-fallback',
+      },
+      {
+        source: '/ar/qr-spine.html',
+        destination: '/ar/qr-spine',
+      },
     ];
   },
 };

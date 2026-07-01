@@ -17,6 +17,15 @@ This project is a mobile-first Next.js Pages Router demo for a NEET Biology Huma
 - Printable QR page: `/ar/qr-heart`
 - QR rewrite: `/ar/qr-heart.html`
 
+### Human Spine AR
+
+- Main AR page: `/ar/spine`
+- Compatibility rewrite: `/ar/spine.html`
+- Fallback 3D viewer: `/ar/spine-fallback`
+- Fallback rewrite: `/ar/spine-fallback.html`
+- Printable QR page: `/ar/qr-spine`
+- QR rewrite: `/ar/qr-spine.html`
+
 ## How to use
 
 1. Open `/ar/qr-heart`.
