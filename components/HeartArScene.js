@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 
 import { HEART_ASSET_PATHS } from './heartContent';
 
-export default function HeartArScene() {
+export default function HeartArScene({
+  assetPaths = HEART_ASSET_PATHS,
+  modelAssetId = 'trackedModelAsset',
+  modelScale = '0.14 0.14 0.14',
+  modelPosition = '0 0 0.08',
+}) {
   const sceneRef = useRef(null);
   const modelPivotRef = useRef(null);
   const startAttemptedRef = useRef(false);
@@ -151,7 +156,7 @@ export default function HeartArScene() {
       {sceneCanRender ? (
         <a-scene
           ref={sceneRef}
-          mindar-image={`imageTargetSrc: ${HEART_ASSET_PATHS.target}; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.01; warmupTolerance: 10; missTolerance: 20;`}
+          mindar-image={`imageTargetSrc: ${assetPaths.target}; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.01; warmupTolerance: 10; missTolerance: 20;`}
           color-space="sRGB"
           renderer="colorManagement: true; physicallyCorrectLights: true; antialias: true; alpha: true;"
           vr-mode-ui="enabled: false"
@@ -160,7 +165,7 @@ export default function HeartArScene() {
           class="heart-ar-scene"
         >
           <a-assets timeout="15000">
-            <a-asset-item id="heartModelAsset" src={HEART_ASSET_PATHS.model} />
+            <a-asset-item id={modelAssetId} src={assetPaths.model} />
           </a-assets>
 
           <a-camera position="0 0 0" look-controls="enabled: false" />
@@ -168,11 +173,11 @@ export default function HeartArScene() {
           <a-entity mindar-image-target="targetIndex: 0">
             <a-ambient-light intensity="1.25" />
             <a-directional-light position="1 2 1" intensity="1.5" />
-            <a-entity ref={modelPivotRef} position="0 0 0.08">
+            <a-entity ref={modelPivotRef} position={modelPosition}>
               <a-gltf-model
-                src="#heartModelAsset"
+                src={`#${modelAssetId}`}
                 rotation="0 0 0"
-                scale="0.14 0.14 0.14"
+                scale={modelScale}
               />
             </a-entity>
           </a-entity>
