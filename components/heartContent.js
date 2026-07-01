@@ -5,6 +5,9 @@ export const HEART_ASSET_PATHS = {
   poster: '/posters/heart-poster.png',
 };
 
+export const HEART_REMOTE_POSTER_IMAGE =
+  'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Heart_diagram-en.svg/1024px-Heart_diagram-en.svg.png';
+
 export const HEART_TOPICS = [
   'default',
   'aorta',
