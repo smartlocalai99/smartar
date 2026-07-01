@@ -6,7 +6,7 @@ export const HEART_ASSET_PATHS = {
 };
 
 export const HEART_REMOTE_POSTER_IMAGE =
-  'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Heart_diagram-en.svg/1024px-Heart_diagram-en.svg.png';
+  'https://img.lb.wbmdstatic.com/vim/live/webmd/consumer_assets/site_images/article_thumbnails/BigBead/heart_anatomy_function_and_blood_circulation_bigbead/1800x1200_heart_anatomy_function_and_blood_circulation_bigbead.jpg';
 
 export const HEART_TOPICS = [
   'default',
