@@ -42,6 +42,9 @@ export default function HeartArScene() {
   const [activeTopic, setActiveTopic] = useState('default');
   const [detail, setDetail] = useState(HEART_CONTENT.default);
   const [sceneState, setSceneState] = useState('loading');
+  const [sceneLoaded, setSceneLoaded] = useState(false);
+  const [cameraStarting, setCameraStarting] = useState(false);
+  const [cameraError, setCameraError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -92,25 +95,17 @@ export default function HeartArScene() {
       setStatusText('Move camera back to the poster');
     };
 
-    const handleModelError = () => {
-      if (bloodFlowActive) {
-        setBloodFlowActive(false);
-        setDetail({
-          title: 'Blood Flow',
-          text: 'Blood flow model not added yet. Add public/models/heart-bloodflow.glb to enable this.',
-        });
-      }
-      setBloodFlowModelAvailable(false);
-    };
+    const handleSceneLoaded = () => setSceneLoaded(true);
 
     targetEl.addEventListener('targetFound', handleFound);
     targetEl.addEventListener('targetLost', handleLost);
-    modelEl.addEventListener('model-error', handleModelError);
+    sceneEl.addEventListener('loaded', handleSceneLoaded);
+    if (sceneEl.hasLoaded) setSceneLoaded(true);
 
     return () => {
       targetEl.removeEventListener('targetFound', handleFound);
       targetEl.removeEventListener('targetLost', handleLost);
-      modelEl.removeEventListener('model-error', handleModelError);
+      sceneEl.removeEventListener('loaded', handleSceneLoaded);
     };
   }, [aframeReady, mindarReady]);
 
@@ -119,6 +114,41 @@ export default function HeartArScene() {
   const handleTopicChange = (topic) => {
     setActiveTopic(topic);
     setDetail(HEART_CONTENT[topic] || HEART_CONTENT.default);
+  };
+
+  const startCamera = async () => {
+    if (!window.isSecureContext) {
+      setCameraError('Camera access requires HTTPS. Open this page with HTTPS (or localhost) and try again.');
+      return;
+    }
+
+    const system = sceneRef.current?.systems?.['mindar-image-system'];
+    if (!system) {
+      setCameraError('The AR engine is still loading. Please wait a moment and tap Start Camera again.');
+      return;
+    }
+
+    setCameraStarting(true);
+    setCameraError('');
+    setSceneState('starting');
+    setStatusText('Starting camera…');
+
+    try {
+      await system.start();
+      setSceneState('scanning');
+      setStatusText('Camera is open — point it at the Heart AR poster.');
+    } catch (error) {
+      const denied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError';
+      setSceneState('error');
+      setStatusText('Camera could not start');
+      setCameraError(
+        denied
+          ? 'Camera permission was denied. Allow camera access in your browser settings, then tap Try Camera Again.'
+          : 'No camera could be opened. Close other apps using the camera, check browser permission, and try again.'
+      );
+    } finally {
+      setCameraStarting(false);
+    }
   };
 
   if (!isClient) {
@@ -147,7 +177,7 @@ export default function HeartArScene() {
       {sceneCanRender ? (
         <a-scene
           ref={sceneRef}
-          mindar-image={`imageTargetSrc: ${HEART_ASSET_PATHS.target}; autoStart: true; uiLoading: no; uiScanning: no;`}
+          mindar-image={`imageTargetSrc: ${HEART_ASSET_PATHS.target}; autoStart: false; uiLoading: no; uiScanning: no; uiError: no;`}
           color-space="sRGB"
           renderer="colorManagement: true, physicallyCorrectLights: true, antialias: true, alpha: true"
           vr-mode-ui="enabled: false"
@@ -186,6 +216,27 @@ export default function HeartArScene() {
         <div className="flex-1" />
 
         <div className="mx-auto w-full max-w-3xl px-3 pb-3 sm:px-6 sm:pb-6">
+          {sceneCanRender && sceneState !== 'scanning' && sceneState !== 'found' && sceneState !== 'lost' ? (
+            <div className="mb-3 rounded-3xl border border-white/10 bg-slate-900/90 p-5 text-center shadow-xl backdrop-blur-md">
+              <h1 className="text-xl font-semibold text-white">Open the AR camera</h1>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                Tap below and allow camera permission. Then point your phone at the printed heart poster.
+              </p>
+              {cameraError ? (
+                <p className="mt-3 rounded-2xl border border-amber-400/30 bg-amber-50 px-3 py-2 text-sm leading-5 text-amber-900">
+                  {cameraError}
+                </p>
+              ) : null}
+              <button
+                type="button"
+                onClick={startCamera}
+                disabled={!sceneLoaded || cameraStarting}
+                className="mt-4 w-full rounded-2xl bg-sky-400 px-5 py-3.5 font-semibold text-slate-950 transition hover:bg-sky-300 disabled:cursor-wait disabled:opacity-60"
+              >
+                {cameraStarting ? 'Opening Camera…' : sceneState === 'error' ? 'Try Camera Again' : sceneLoaded ? 'Start Camera' : 'Preparing AR…'}
+              </button>
+            </div>
+          ) : null}
           {!sceneCanRender ? (
             <div className="mb-3 rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-sm text-slate-100 backdrop-blur-md sm:p-5">
               <p className="font-semibold text-white">AR loading state</p>
