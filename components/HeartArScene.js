@@ -9,6 +9,7 @@ export default function HeartArScene({
   modelScale = '0.14 0.14 0.14',
   modelPosition = '0 0 0.08',
   modelLocalPosition = '0 0 0',
+  modelRotation = '0 0 0',
   hotspots = [],
 }) {
   const sceneRef = useRef(null);
@@ -238,7 +239,7 @@ export default function HeartArScene({
               <a-gltf-model
                 src={`#${modelAssetId}`}
                 position={modelLocalPosition}
-                rotation="0 0 0"
+                rotation={modelRotation}
                 scale={modelScale}
               />
               {hotspots.map((item) => (
@@ -275,16 +276,20 @@ export default function HeartArScene({
       ) : null}
 
       {cameraRunning && selectedHotspot ? (
-        <button
-          type="button"
-          onClick={() => setSelectedHotspot(null)}
-          className="absolute bottom-4 left-4 right-4 z-30 rounded-3xl border border-white/15 bg-slate-950/90 p-4 text-left text-white shadow-2xl backdrop-blur-md"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">Spine part {selectedHotspot.number}</p>
-          <h2 className="mt-1 text-xl font-semibold">{selectedHotspot.title}</h2>
-          <p className="mt-2 text-sm leading-5 text-slate-200">{selectedHotspot.patient}</p>
-          <p className="mt-2 text-xs font-medium text-cyan-200">{selectedHotspot.keyPoint}</p>
-        </button>
+        <section className="absolute bottom-3 left-3 right-3 z-30 max-h-[46svh] overflow-y-auto rounded-3xl border border-white/15 bg-slate-950/95 p-4 text-left text-white shadow-2xl backdrop-blur-md sm:bottom-5 sm:left-1/2 sm:right-auto sm:w-[30rem] sm:-translate-x-1/2">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">Spine part {selectedHotspot.number}</p>
+              <h2 className="mt-1 text-xl font-semibold">{selectedHotspot.title}</h2>
+            </div>
+            <button type="button" onClick={() => setSelectedHotspot(null)} aria-label="Close details" className="min-h-10 min-w-10 rounded-full bg-white/10 text-lg">×</button>
+          </div>
+          <div className="mt-3 space-y-3 text-sm leading-5 text-slate-200">
+            <p><span className="font-semibold text-cyan-300">NEET Biology:</span> {selectedHotspot.neet}</p>
+            <p><span className="font-semibold text-cyan-300">Simple explanation:</span> {selectedHotspot.patient}</p>
+            <p className="rounded-2xl bg-cyan-400/10 p-3"><span className="font-semibold text-cyan-300">Key point:</span> {selectedHotspot.keyPoint}</p>
+          </div>
+        </section>
       ) : null}
     </main>
   );

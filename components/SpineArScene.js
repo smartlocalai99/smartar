@@ -6,8 +6,9 @@ export default function SpineArScene() {
     <HeartArScene
       assetPaths={SPINE_ASSET_PATHS}
       modelAssetId="spineModelAsset"
-      modelPosition="0 0 0.035"
+      modelPosition="0 -0.035 0.012"
       modelLocalPosition="0.086 -0.778 0"
+      modelRotation="-8 0 0"
       modelScale="0.036 0.036 0.036"
       hotspots={SPINE_HOTSPOTS}
     />
