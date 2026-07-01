@@ -11,6 +11,7 @@ export default function HeartArScene({
 }) {
   const sceneRef = useRef(null);
   const modelPivotRef = useRef(null);
+  const modelZoomRef = useRef(1);
   const startAttemptedRef = useRef(false);
   const cameraStartingRef = useRef(false);
   const [clientReady, setClientReady] = useState(false);
@@ -99,38 +100,75 @@ export default function HeartArScene({
   }, [sceneLoaded]);
 
   useEffect(() => {
-    let dragging = false;
+    const pointers = new Map();
     let lastX = 0;
     let lastY = 0;
+    let pinchDistance = 0;
+
+    const applyZoom = (nextZoom) => {
+      const pivot = modelPivotRef.current;
+      if (!pivot) return;
+      modelZoomRef.current = Math.min(3, Math.max(0.45, nextZoom));
+      pivot.object3D.scale.setScalar(modelZoomRef.current);
+    };
+
+    const distanceBetweenPointers = () => {
+      const [first, second] = [...pointers.values()];
+      return Math.hypot(second.x - first.x, second.y - first.y);
+    };
 
     const begin = (event) => {
       if (!cameraRunning || !modelPivotRef.current) return;
-      dragging = true;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       lastX = event.clientX;
       lastY = event.clientY;
+      if (pointers.size === 2) pinchDistance = distanceBetweenPointers();
     };
     const move = (event) => {
-      if (!dragging || !modelPivotRef.current) return;
-      const dx = event.clientX - lastX;
-      const dy = event.clientY - lastY;
-      lastX = event.clientX;
-      lastY = event.clientY;
-      modelPivotRef.current.object3D.rotation.y += dx * 0.012;
-      modelPivotRef.current.object3D.rotation.x += dy * 0.012;
+      if (!pointers.has(event.pointerId) || !modelPivotRef.current) return;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+      if (pointers.size === 2) {
+        const nextDistance = distanceBetweenPointers();
+        if (pinchDistance > 0) applyZoom(modelZoomRef.current * (nextDistance / pinchDistance));
+        pinchDistance = nextDistance;
+      } else if (pointers.size === 1) {
+        const dx = event.clientX - lastX;
+        const dy = event.clientY - lastY;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        modelPivotRef.current.object3D.rotation.y += dx * 0.012;
+        modelPivotRef.current.object3D.rotation.x += dy * 0.012;
+      }
       event.preventDefault();
     };
-    const end = () => { dragging = false; };
+    const end = (event) => {
+      pointers.delete(event.pointerId);
+      pinchDistance = pointers.size === 2 ? distanceBetweenPointers() : 0;
+      if (pointers.size === 1) {
+        const remaining = [...pointers.values()][0];
+        lastX = remaining.x;
+        lastY = remaining.y;
+      }
+    };
+    const wheel = (event) => {
+      if (!cameraRunning || !modelPivotRef.current) return;
+      applyZoom(modelZoomRef.current * Math.exp(-event.deltaY * 0.001));
+      event.preventDefault();
+    };
 
     window.addEventListener('pointerdown', begin);
     window.addEventListener('pointermove', move, { passive: false });
     window.addEventListener('pointerup', end);
     window.addEventListener('pointercancel', end);
+    window.addEventListener('wheel', wheel, { passive: false });
 
     return () => {
       window.removeEventListener('pointerdown', begin);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', end);
       window.removeEventListener('pointercancel', end);
+      window.removeEventListener('wheel', wheel);
     };
   }, [cameraRunning]);
 
@@ -156,7 +194,7 @@ export default function HeartArScene({
       {sceneCanRender ? (
         <a-scene
           ref={sceneRef}
-          mindar-image={`imageTargetSrc: ${assetPaths.target}; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.01; warmupTolerance: 10; missTolerance: 20;`}
+          mindar-image={`imageTargetSrc: ${assetPaths.target}; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; filterMinCF: 0.00005; filterBeta: 0.001; warmupTolerance: 15; missTolerance: 30;`}
           color-space="sRGB"
           renderer="colorManagement: true; physicallyCorrectLights: true; antialias: true; alpha: true;"
           vr-mode-ui="enabled: false"
