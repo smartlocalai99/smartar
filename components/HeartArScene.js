@@ -5,6 +5,9 @@ import { HEART_ASSET_PATHS } from './heartContent';
 
 export default function HeartArScene() {
   const sceneRef = useRef(null);
+  const modelPivotRef = useRef(null);
+  const startAttemptedRef = useRef(false);
+  const cameraStartingRef = useRef(false);
   const [clientReady, setClientReady] = useState(false);
   const [aframeReady, setAframeReady] = useState(false);
   const [mindarReady, setMindarReady] = useState(false);
@@ -12,6 +15,10 @@ export default function HeartArScene() {
   const [cameraRunning, setCameraRunning] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    cameraStartingRef.current = cameraStarting;
+  }, [cameraStarting]);
 
   useEffect(() => setClientReady(true), []);
 
@@ -23,11 +30,13 @@ export default function HeartArScene() {
     const scene = sceneRef.current;
     const onLoaded = () => setSceneLoaded(true);
     const onReady = () => {
+      cameraStartingRef.current = false;
       setCameraStarting(false);
       setCameraRunning(true);
       setError('');
     };
     const onError = () => {
+      cameraStartingRef.current = false;
       setCameraStarting(false);
       setCameraRunning(false);
       setError('Camera could not open. Tap anywhere to try again.');
@@ -52,8 +61,9 @@ export default function HeartArScene() {
     }
 
     const system = sceneRef.current?.systems?.['mindar-image-system'];
-    if (!system || cameraRunning || cameraStarting) return;
+    if (!system || cameraRunning || cameraStartingRef.current) return;
 
+    cameraStartingRef.current = true;
     setCameraStarting(true);
     setError('');
 
@@ -69,10 +79,55 @@ export default function HeartArScene() {
     try {
       system.start();
     } catch {
+      cameraStartingRef.current = false;
       setCameraStarting(false);
       setError('Camera could not open. Tap anywhere to try again.');
     }
   };
+
+  useEffect(() => {
+    if (!sceneLoaded || startAttemptedRef.current) return;
+    startAttemptedRef.current = true;
+    startCamera();
+    // startCamera intentionally runs once when MindAR finishes loading.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneLoaded]);
+
+  useEffect(() => {
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    const begin = (event) => {
+      if (!cameraRunning || !modelPivotRef.current) return;
+      dragging = true;
+      lastX = event.clientX;
+      lastY = event.clientY;
+    };
+    const move = (event) => {
+      if (!dragging || !modelPivotRef.current) return;
+      const dx = event.clientX - lastX;
+      const dy = event.clientY - lastY;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      modelPivotRef.current.object3D.rotation.y += dx * 0.012;
+      modelPivotRef.current.object3D.rotation.x += dy * 0.012;
+      event.preventDefault();
+    };
+    const end = () => { dragging = false; };
+
+    window.addEventListener('pointerdown', begin);
+    window.addEventListener('pointermove', move, { passive: false });
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+
+    return () => {
+      window.removeEventListener('pointerdown', begin);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+  }, [cameraRunning]);
 
   if (!clientReady) return null;
 
@@ -96,7 +151,7 @@ export default function HeartArScene() {
       {sceneCanRender ? (
         <a-scene
           ref={sceneRef}
-          mindar-image={`imageTargetSrc: ${HEART_ASSET_PATHS.target}; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; filterMinCF: 0.0001; filterBeta: 10; warmupTolerance: 8; missTolerance: 12;`}
+          mindar-image={`imageTargetSrc: ${HEART_ASSET_PATHS.target}; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.01; warmupTolerance: 10; missTolerance: 20;`}
           color-space="sRGB"
           renderer="colorManagement: true; physicallyCorrectLights: true; antialias: true; alpha: true;"
           vr-mode-ui="enabled: false"
@@ -113,12 +168,13 @@ export default function HeartArScene() {
           <a-entity mindar-image-target="targetIndex: 0">
             <a-ambient-light intensity="1.25" />
             <a-directional-light position="1 2 1" intensity="1.5" />
-            <a-gltf-model
-              src="#heartModelAsset"
-              position="0 0 0.08"
-              rotation="0 0 0"
-              scale="0.14 0.14 0.14"
-            />
+            <a-entity ref={modelPivotRef} position="0 0 0.08">
+              <a-gltf-model
+                src="#heartModelAsset"
+                rotation="0 0 0"
+                scale="0.14 0.14 0.14"
+              />
+            </a-entity>
           </a-entity>
         </a-scene>
       ) : null}

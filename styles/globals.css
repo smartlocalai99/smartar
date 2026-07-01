@@ -55,4 +55,5 @@ video[playsinline] {
   display: block !important;
   max-width: none !important;
   max-height: none !important;
+  touch-action: none;
 }
